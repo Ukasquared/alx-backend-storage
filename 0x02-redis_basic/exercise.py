@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """writing strings to redis"""
 import redis
-from typing import Union, Callable
+from typing import Union, Callable, Any
 import uuid
+from functools import wraps
+
+
+def count_calls(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """ count the number of times
+    a method is called"""
+    @wraps(fn)
+    def increment(self, *args, **kwargs):
+        """increment count field"""
+        self._redis.incr(fn.__qualname__)
+        return fn
+    return increment
 
 class Cache:
     """writing strings to redis"""
@@ -11,6 +23,7 @@ class Cache:
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @count_calls
     def store(self, data: Union[str, int,
               bytes, float]) -> str:
         """ store string to redis db"""
